@@ -1,11 +1,11 @@
 #include <iostream>
-#include <cstring>
+#include <cstdint>
 
-#define BIGNUM_CHUNK uint8_t
+#define BIGNUM_CHUNK int8_t
 
 typedef struct
 {
-	BIGNUM_CHUNK chunks[5];
+	BIGNUM_CHUNK a[5];
 } bigint256;
 
 
@@ -17,63 +17,75 @@ void make_bigint256(
 	BIGNUM_CHUNK a3,
 	BIGNUM_CHUNK a4)
 {
-	x->chunks[0] = a0;
-	x->chunks[1] = a1;
-	x->chunks[2] = a2;
-	x->chunks[3] = a3;
-	x->chunks[4] = a4;
+	x->a[0] = a0;
+	x->a[1] = a1;
+	x->a[2] = a2;
+	x->a[3] = a3;
+	x->a[4] = a4;
 }
 
 void bigint256_print(const bigint256* x)
 {
 	for (int i = 4; i >= 0; --i)
-		std::cout << +x->chunks[i] << " ";
+		std::cout << +x->a[i] << " ";
 	std::cout << std::endl;
 }
 
-void bigint256_add(bigint256* result,
+void bigint256_add(bigint256* r,
                    const bigint256* x,
                    const bigint256* y)
 {
-	unsigned long long carry = 0;
 	for (int i = 0; i < 5; ++i)
 	{
-		result->chunks[i] = x->chunks[i] + y->chunks[i];
+		r->a[i] = x->a[i] + y->a[i];
 	}
 
-	BIGNUM_CHUNK tmp = result->chunks[0];
-	tmp >>= 6;	/*Get carry */
-	result->chunks[1] += tmp;
-	result->chunks[0] &= 0x3F; /*Zero carries */
+	BIGNUM_CHUNK carry = r->a[0] >> 6;
+	r->a[1] += carry;
+	r->a[0] &= 0x3F; /*Zero carries */
 
-	tmp = result->chunks[1];
-	tmp >>= 6;
-	result->chunks[2] += tmp;
-	result->chunks[1] &= 0x3F;
+	carry = r->a[1] >> 6;
+	r->a[2] += carry;
+	r->a[1] &= 0x3F;
 
-	tmp = result->chunks[2];
-	tmp >>= 6;
-	result->chunks[3] += tmp;
-	result->chunks[2] &= 0x3F;
+	carry = r->a[2] >> 6;
+	r->a[3] += carry;
+	r->a[2] &= 0x3F;
 
-	tmp = result->chunks[3];
-	tmp >>= 6;
-	result->chunks[4] += tmp;
-	result->chunks[3] &= 0x3F;
+	carry = r->a[3] >> 6;
+	r->a[4] += carry;
+	r->a[3] &= 0x3F;
 
-	result->chunks[5] &= 0x3F;
+	r->a[5] &= 0x3F;
 }
 
-void bigint256_sub(bigint256* result,
+void bigint256_sub(bigint256* r,
                    const bigint256* x,
                    const bigint256* y)
 {
-	unsigned carry = 0;
-	for (int i = 0; i < 5; ++i)
-	{
-		result->chunks[i] = x->chunks[i] - y->chunks[i] - carry;
-		carry = x->chunks[i] < y->chunks[i];
-	}
+	r->a[0] = x->a[0] - y->a[0];
+	r->a[1] = x->a[1] - y->a[1];
+	r->a[2] = x->a[2] - y->a[2];
+	r->a[3] = x->a[3] - y->a[3];
+	r->a[4] = x->a[4] - y->a[4];
+
+	int8_t carry = r->a[0] >> 6;
+	r->a[1] -= carry;
+	r->a[0] &= 0x3F;
+
+	carry = r->a[1] >> 6;
+	r->a[2] -= carry;
+	r->a[1] &= 0x3F;
+
+	carry = r->a[2] >> 6;
+	r->a[3] -= carry;
+	r->a[2] &= 0x3F;
+
+	carry = r->a[3] >> 6;
+	r->a[4] -= carry;
+	r->a[3] &= 0x3F;
+
+	r->a[4] &= 0x3F;
 }
 
 
@@ -89,6 +101,6 @@ int main()
 	bigint256_print(&x);
 	bigint256_print(&y);
 
-	bigint256_add(&r, &x, &y);
+	bigint256_sub(&r, &x, &y);
 	bigint256_print(&r);
 }
